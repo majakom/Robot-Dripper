@@ -11,26 +11,26 @@ const int motorControlR = 10;
 
 const int trigPin = 3;
 const int echoPin = 4;
-int distance, new_distance, duration;
+int distance, duration;
 
 int distVector[5] = {1000,1000,1000,1000,1000};
 int index = 0;
 bool stop = false;
-bool running = false;
 const int debug = 12;
-int test = 0;
 
 //controling the spacetime
 int time = 0;
 int waitTime = 0;
 int stage = 0;
 
-int angle = 0;
+const int angleStart = 179; // Możliwe że dla drugiego serwa będzie od 0 do 180, ale fajnie by było gdyby było tak samo
+const int angleStop = 0;
+int angle = angleStart;
 
 // the setup routine runs once when you press reset:
 void setup() {
   servo.attach(11);
-  servo.write(angle); 
+  servo.write(angleStart); 
 
   pinMode(pushButtonRed, INPUT);
 
@@ -63,28 +63,55 @@ void loop() {
     stage = 0;
     time = 0;
     waitTime = 20;
-    angle = 0;
+    angle = angleStart;
+    analogWrite(motorControl, 0);
+    analogWrite(motorControlR, 0);
   }
+
   if (!wait()){
     switch (stage){
       case 0:
-        //Czekaj na przycisk - rozpoczęcie robienia kawy
-        servo.write(0);
+        // Czekaj na przycisk i czekaj minutę - rozpoczęcie robienia kawy
+        // nalanie wody możnaby dodać
+        analogWrite(motorControl, 0);
+        analogWrite(motorControlR, 0);
         if(digitalRead(pushButton) == HIGH){
-          analogWrite(motorControl, 255);
-          delay(50);
+          servo.write(angleStart);
+          waitTime = 1000; // (możnaby dołożyć leda albo fancy wyświetlacz)
           Serial.println("0->1");
           stage = 1;
-        } else {
-          analogWrite(motorControl,0);
-          analogWrite(motorControlR,0);
         }
         delay(1); 
         break;
       case 1:
-        //Obniż do wykrycia kubka
+        // Zamieszaj w jedną stronę
+        analogWrite(motorControl, 255);
+        delay(50);
+        waitTime = 200; // mieszanie przez chwilę
+        Serial.println("1->2");
+        stage = 2;
+        break;
+      case 2:
+        // Zamieszaj w drugą (bo mostek H)
+        analogWrite(motorControl, 0);
+        delay(50);
+        analogWrite(motorControlR,255);
+        delay(50);
+        waitTime = 200; // mieszanie przez chwilę
+        Serial.println("2->3");
+        stage = 3;
+        break;
+      case 3:
+        // Poczekaj do reszty z 15 sekund
+        analogWrite(motorControlR, 0);
+        delay(50);
+        waitTime = 500;
+        Serial.println("3->4");
+        stage = 4;
+        break;
+      case 4:
+        // Obniż do wykrycia kubka
         stop = false;
-        //detecting interruption
         for(int a = 0; a < 5; a++) {
           if(distVector[a] > 7) {
             stop = false;
@@ -93,64 +120,122 @@ void loop() {
             stop = true;
           }
         }
-        if(stop) {
-          analogWrite(motorControl,0);
-          Serial.println("1->2");
-          stage = 2;
-        }
-        
-        break;
-      case 2:
-        //Wlej wodę
-        if (angle < 120) {
+        if(!stop) {
+          angle--;
           servo.write(angle);
-          angle++;
-          waitTime = 2;
-        } else if (angle == 120) {
-          servo.write(angle);
-          angle++;
-          waitTime = 100;
-        } else if (angle <= 240) {
-            servo.write(120-(angle-120));
-            angle++;
-            waitTime = 2;
+          if (angle==angleStop) {
+            Serial.println("4->5");
+            stage = 5;
+          }
+          waitTime = 20;
         } else {
-          angle = 0;
-          stage = 3;
-          waitTime = 1000; // Poczekaj minutę (nie wiem czy to dokładnie 60000)
-          Serial.println("2->3");
+          Serial.println("4->5");
+          stage = 5;
         }
-        break;
-      case 3:
-        
-        //Zamieszaj
-        stage = 4;
-        waitTime = 1000; // Poczekaj 10 sekund (przy założeniu że mieszanie trwa 5 sekund)
-        Serial.println("3->4");
-        break;
-      case 4:
-        //Obniż
-        analogWrite(motorControl,255);
-        stage = 5;
-        Serial.println("4->5");
-        waitTime = 1000; 
         break;
       case 5:
-        // Poczekaj 2 minuty aż się przeleje
-        analogWrite(motorControl,0);
-        stage = 6;
+        // Poczekaj na przelanie
+        waitTime = 1000;
         Serial.println("5->6");
-        waitTime = 1000;
-        break;
+        stage = 6;
       case 6:
-        //Podnieś
-        analogWrite(motorControlR,255);
-        Serial.println("6->0");
-        stage = 0;
-        waitTime = 1000;
+        // Podnieś
+        angle++;
+        servo.write(angle);
+        if (angle==angleStart) {
+          Serial.println("6->0");
+          stage = 0;
+        }
+        waitTime = 20;
         break;
     }
   }
+  // if (!wait()){
+  //   switch (stage){
+  //     case 0:
+  //       //Czekaj na przycisk - rozpoczęcie robienia kawy
+  //       servo.write(0);
+  //       if(digitalRead(pushButton) == HIGH){
+  //         analogWrite(motorControl, 255);
+  //         delay(50);
+  //         Serial.println("0->1");
+  //         stage = 1;
+  //       } else {
+  //         analogWrite(motorControl,0);
+  //         analogWrite(motorControlR,0);
+  //       }
+  //       delay(1); 
+  //       break;
+  //     case 1:
+  //       //Obniż do wykrycia kubka
+  //       stop = false;
+  //       //detecting interruption
+  //       for(int a = 0; a < 5; a++) {
+  //         if(distVector[a] > 7) {
+  //           stop = false;
+  //           break;
+  //         } else {
+  //           stop = true;
+  //         }
+  //       }
+  //       if(stop) {
+  //         analogWrite(motorControl,0);
+  //         Serial.println("1->2");
+  //         stage = 2;
+  //       }
+        
+  //       break;
+  //     case 2:
+  //       //Wlej wodę
+  //       if (angle < 120) {
+  //         servo.write(angle);
+  //         angle++;
+  //         waitTime = 2;
+  //       } else if (angle == 120) {
+  //         servo.write(angle);
+  //         angle++;
+  //         waitTime = 100;
+  //       } else if (angle <= 240) {
+  //           servo.write(120-(angle-120));
+  //           angle++;
+  //           waitTime = 2;
+  //       } else {
+  //         angle = 0;
+  //         stage = 3;
+  //         waitTime = 1000; // Poczekaj minutę (nie wiem czy to dokładnie 60000)
+  //         Serial.println("2->3");
+  //       }
+  //       break;
+  //     case 3:
+        
+  //       //Zamieszaj
+  //       stage = 4;
+  //       waitTime = 1000; // Poczekaj 10 sekund (przy założeniu że mieszanie trwa 5 sekund)
+  //       Serial.println("3->4");
+  //       break;
+  //     case 4:
+  //       //Obniż
+  //       analogWrite(motorControl,255);
+  //       stage = 5;
+  //       Serial.println("4->5");
+  //       waitTime = 1000; 
+  //       break;
+  //     case 5:
+  //       // Poczekaj 2 minuty aż się przeleje
+  //       analogWrite(motorControl,0);
+  //       stage = 6;
+  //       Serial.println("5->6");
+  //       waitTime = 1000;
+  //       break;
+  //     case 6:
+  //       //Podnieś
+  //       analogWrite(motorControlR,255);
+  //       Serial.println("6->0");
+  //       stage = 0;
+  //       waitTime = 1000;
+  //       break;
+  //   }
+  // }
   
   // // read the state of the button and check if it is pressed
   // if(digitalRead(pushButton) == HIGH){
