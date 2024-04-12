@@ -27,10 +27,13 @@ const int angleStart = 179; // Możliwe że dla drugiego serwa będzie od 0 do 1
 const int angleStop = 0;
 int angle = angleStart;
 
+const int debugWaitStart = 13;
+
 // the setup routine runs once when you press reset:
 void setup() {
   servo.attach(11);
   servo.write(angleStart); 
+  pinMode(debugWaitStart, OUTPUT);
 
   pinMode(pushButtonRed, INPUT);
 
@@ -77,7 +80,8 @@ void loop() {
         analogWrite(motorControlR, 0);
         if(digitalRead(pushButton) == HIGH){
           servo.write(angleStart);
-          waitTime = 1000; // (możnaby dołożyć leda albo fancy wyświetlacz)
+          waitTime = 2000; // (możnaby dołożyć leda albo fancy wyświetlacz)
+          digitalWrite(debugWaitStart, HIGH);
           Serial.println("0->1");
           stage = 1;
         }
@@ -85,9 +89,10 @@ void loop() {
         break;
       case 1:
         // Zamieszaj w jedną stronę
+        digitalWrite(debugWaitStart, LOW);
         analogWrite(motorControl, 255);
         delay(50);
-        waitTime = 200; // mieszanie przez chwilę
+        waitTime = 1000; // mieszanie przez chwilę
         Serial.println("1->2");
         stage = 2;
         break;
@@ -97,7 +102,7 @@ void loop() {
         delay(50);
         analogWrite(motorControlR,255);
         delay(50);
-        waitTime = 200; // mieszanie przez chwilę
+        waitTime = 1000; // mieszanie przez chwilę
         Serial.println("2->3");
         stage = 3;
         break;
@@ -105,7 +110,7 @@ void loop() {
         // Poczekaj do reszty z 15 sekund
         analogWrite(motorControlR, 0);
         delay(50);
-        waitTime = 500;
+        waitTime = 1000;
         Serial.println("3->4");
         stage = 4;
         break;
@@ -127,7 +132,7 @@ void loop() {
             Serial.println("4->5");
             stage = 5;
           }
-          waitTime = 20;
+          waitTime = 50;
         } else {
           Serial.println("4->5");
           stage = 5;
@@ -135,18 +140,21 @@ void loop() {
         break;
       case 5:
         // Poczekaj na przelanie
-        waitTime = 1000;
+        digitalWrite(debugWaitStart, HIGH);
+        waitTime = 2000;
         Serial.println("5->6");
         stage = 6;
+        break;
       case 6:
         // Podnieś
+        digitalWrite(debugWaitStart, LOW);
         angle++;
         servo.write(angle);
         if (angle==angleStart) {
           Serial.println("6->0");
           stage = 0;
         }
-        waitTime = 20;
+        waitTime = 50;
         break;
     }
   }
