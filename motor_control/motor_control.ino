@@ -4,6 +4,7 @@ Servo servo;
 const int pushButton = 2;
 //red button
 const int pushButtonRed = 5;
+const int pushButtonReturn = 6;
 
 // the transistor which controls the motor will be attached to digital pin 9
 const int motorControl = 9;
@@ -19,8 +20,8 @@ bool stop = false;
 const int debug = 12;
 
 //controling the spacetime
-int time = 0;
-int waitTime = 0;
+long int time = 0;
+long int waitTime = 0;
 int stage = 0;
 
 const int angleStart = 179; // Możliwe że dla drugiego serwa będzie od 0 do 180, ale fajnie by było gdyby było tak samo
@@ -36,6 +37,7 @@ void setup() {
   pinMode(debugWaitStart, OUTPUT);
 
   pinMode(pushButtonRed, INPUT);
+  pinMode(pushButtonReturn, INPUT);
 
   pinMode(debug, OUTPUT); //diode
   // make the pushbutton's pin an input:
@@ -61,14 +63,14 @@ void setup() {
 // the loop routine runs over and over again forever:
 void loop() {
    
-  distance = measureDistance();
+  //distance = measureDistance();
   if(digitalRead(pushButtonRed) == HIGH) {
     stage = 0;
     time = 0;
     waitTime = 20;
-    angle = angleStart;
     analogWrite(motorControl, 0);
     analogWrite(motorControlR, 0);
+    digitalWrite(debugWaitStart, LOW);
   }
 
   if (!wait()){
@@ -76,11 +78,14 @@ void loop() {
       case 0:
         // Czekaj na przycisk i czekaj minutę - rozpoczęcie robienia kawy
         // nalanie wody możnaby dodać
+        if (digitalRead(pushButtonReturn) == HIGH){
+          stage = 6;
+        }
         analogWrite(motorControl, 0);
         analogWrite(motorControlR, 0);
         if(digitalRead(pushButton) == HIGH){
           servo.write(angleStart);
-          waitTime = 2000; // (możnaby dołożyć leda albo fancy wyświetlacz)
+          waitTime = 60000; // (możnaby dołożyć leda albo fancy wyświetlacz)
           digitalWrite(debugWaitStart, HIGH);
           Serial.println("0->1");
           stage = 1;
@@ -92,7 +97,7 @@ void loop() {
         digitalWrite(debugWaitStart, LOW);
         analogWrite(motorControl, 255);
         delay(50);
-        waitTime = 1000; // mieszanie przez chwilę
+        waitTime = 3000; // mieszanie przez 5s
         Serial.println("1->2");
         stage = 2;
         break;
@@ -102,29 +107,29 @@ void loop() {
         delay(50);
         analogWrite(motorControlR,255);
         delay(50);
-        waitTime = 1000; // mieszanie przez chwilę
+        waitTime = 3000; // mieszanie przez 5s
         Serial.println("2->3");
         stage = 3;
         break;
       case 3:
-        // Poczekaj do reszty z 15 sekund
+        // Poczekaj do niecałej reszty z 15 sekund
         analogWrite(motorControlR, 0);
         delay(50);
-        waitTime = 1000;
+        waitTime = 6000;
         Serial.println("3->4");
         stage = 4;
         break;
       case 4:
         // Obniż do wykrycia kubka
         stop = false;
-        for(int a = 0; a < 5; a++) {
-          if(distVector[a] > 7) {
-            stop = false;
-            break;
-          } else {
-            stop = true;
-          }
-        }
+        // for(int a = 0; a < 5; a++) {
+        //   if(distVector[a] > 7) {
+        //     stop = false;
+        //     break;
+        //   } else {
+        //     stop = true;
+        //   }
+        // }
         if(!stop) {
           angle--;
           servo.write(angle);
@@ -141,7 +146,7 @@ void loop() {
       case 5:
         // Poczekaj na przelanie
         digitalWrite(debugWaitStart, HIGH);
-        waitTime = 2000;
+        waitTime = 90000;
         Serial.println("5->6");
         stage = 6;
         break;
@@ -288,29 +293,29 @@ void loop() {
 }
 
 
-int measureDistance() {
+// int measureDistance() {
 
-  digitalWrite(trigPin, LOW);
-  delayMicroseconds(2);
-  digitalWrite(trigPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trigPin, LOW);
-  duration = pulseIn(echoPin,HIGH);
-  distance = duration*0.0344/2;
-  // Serial.print("Distance: ");
-  // Serial.print(
-  //     distance); // Print the output in serial monitor
-  // Serial.println(" cm");
+//   digitalWrite(trigPin, LOW);
+//   delayMicroseconds(2);
+//   digitalWrite(trigPin, HIGH);
+//   delayMicroseconds(10);
+//   digitalWrite(trigPin, LOW);
+//   duration = pulseIn(echoPin,HIGH);
+//   distance = duration*0.0344/2;
+//   // Serial.print("Distance: ");
+//   // Serial.print(
+//   //     distance); // Print the output in serial monitor
+//   // Serial.println(" cm");
 
-  if(index == 5) {
-    index = 0;
-  }
+//   if(index == 5) {
+//     index = 0;
+//   }
 
-  distVector[index++] = distance;
+//   distVector[index++] = distance;
 
 
-  return distance;
-}
+//   return distance;
+// }
 
 
 bool wait(){
