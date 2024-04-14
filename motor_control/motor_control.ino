@@ -88,7 +88,7 @@ void loop() {
         analogWrite(motorControlR, 0);
         if(digitalRead(pushButton) == HIGH){
           servo.write(angleStart);
-          waitTime = 30000; // (możnaby dołożyć leda albo fancy wyświetlacz)
+          waitTime = 8580; // (możnaby dołożyć leda albo fancy wyświetlacz)
           digitalWrite(debugWaitStart, HIGH);
           Serial.println("0->1");
           stage = 1;
@@ -100,7 +100,7 @@ void loop() {
         digitalWrite(debugWaitStart, LOW);
         analogWrite(motorControl, 255);
         delay(50);
-        waitTime = 2500; // mieszanie przez 5s
+        waitTime = 715; // mieszanie przez 5s
         Serial.println("1->2");
         stage = 2;
         break;
@@ -110,7 +110,7 @@ void loop() {
         delay(50);
         analogWrite(motorControlR,255);
         delay(50);
-        waitTime = 2500; // mieszanie przez 5s
+        waitTime = 715; // mieszanie przez 5s
         Serial.println("2->3");
         stage = 3;
         break;
@@ -118,7 +118,7 @@ void loop() {
         // Poczekaj do niecałej reszty z 15 sekund
         analogWrite(motorControlR, 0);
         delay(50);
-        waitTime = 1500;
+        waitTime = 430;
         Serial.println("3->4");
         stage = 4;
         break;
@@ -149,7 +149,7 @@ void loop() {
       case 5:
         // Poczekaj na przelanie
         digitalWrite(debugWaitStart, HIGH);
-        waitTime = 60000;
+        waitTime = 17160;
         Serial.println("5->6");
         stage = 6;
         break;
