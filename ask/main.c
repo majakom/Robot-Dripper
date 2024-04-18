@@ -1,7 +1,9 @@
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/eeprom.h>
+#include <stdio.h>
 # define INDEX_DISTANCE 5
+# define PROGRESS_STEPS 6
 
 const int MIN_ANGLE = 3;
 const int MAX_ANGLE = 41;
@@ -15,6 +17,7 @@ void initButtons();
 void initServoControl();
 void initDistanceMeasurement();
 void initMotorCotntrol();
+void initShiftRegister();
 void blinkResetLed();
 void saveAngle();
 void sendPulse();
@@ -23,6 +26,9 @@ unsigned long measureDistance();
 void motorStop();
 void motorForward(uint8_t dutyCycle);
 void motorBackward(uint8_t dutyCycle);
+void progressTime();
+void writeShiftRegister();
+void finishCoffee();
 
 void startCoffee();
 void servoUP();
@@ -32,10 +38,12 @@ void stir1();
 void stir2();
 
 int stage = 0;
-int distVector[INDEX_DISTANCE] = {1000,1000,1000,1000,1000};
+int distVector[INDEX_DISTANCE];
 int indexVector = 0;
 int stop = 0;
 unsigned long distance = 0;
+int progress = 0;
+
 
 int main(void) {
 	init();
@@ -48,12 +56,13 @@ int main(void) {
 		case 0:
 			if (bit_is_clear(PINC,PC3)){
 				startCoffee();
-				_delay_ms(10000);
-			}
-			if (bit_is_clear(PINC,PC2)){
+				_delay_ms(5000);
+				progressTime();
+				_delay_ms(5000);
+				progressTime();
+			} else if (bit_is_clear(PINC,PC2)){
 				servoUP();
-			}
-			if (bit_is_clear(PINC,PC1)){
+			} else if (bit_is_clear(PINC,PC1)){
 				servoDOWN();
 			}
 			break;
@@ -76,14 +85,25 @@ int main(void) {
 			break;
 		case 5:
 			PORTC |= (1<<PC4);
-			_delay_ms(10000);
+			_delay_ms(1000);
+			progressTime();
+			_delay_ms(5000);
+			progressTime();
+			_delay_ms(5000);
+			progressTime();
+			_delay_ms(5000);
+			progressTime();
 			PORTC &= ~(1<<PC4);
 			stage = 6;
 			break;
 		case 6:
 			servoUP();
+			finishCoffee();
+			progressTime();
 			stage = 0;
+			break;
 		}
+		_delay_ms(1);
 	}
 }
 
@@ -93,6 +113,7 @@ void init(void){
 	initServoControl();
 	initDistanceMeasurement();
 	initMotorCotntrol();
+	initShiftRegister();
 	blinkResetLed();
 }
 
@@ -127,6 +148,9 @@ void initServoControl(){
 void initDistanceMeasurement(){
 	DDRD |= (1 << PD0); // Set trigger pin (PD0) as output
 	DDRD &= ~(1 << PD1); // Set echo pin (PD1) as input
+	for (int i = 0; i < INDEX_DISTANCE; i++){
+		distVector[i] = 1000;
+	}
 }
 
 void initMotorCotntrol(){
@@ -136,6 +160,13 @@ void initMotorCotntrol(){
 	DDRD |= (1<<PD3); // Set Direction 2 Control Output
 	OCR2 = 0;
 	motorStop();
+}
+
+void initShiftRegister() {
+	DDRD |= (1<<PD5); // Set SI/DS Output
+	DDRD |= (1<<PD6); // Set RCK/ST_CP Output
+	DDRD |= (1<<PD7); // Set SCK/SH_CP
+	writeShiftRegister();
 }
 
 void blinkResetLed(){
@@ -204,6 +235,7 @@ void servoUP(){
 		_delay_ms(100);
 		saveAngle();
 	}
+	saveAngle();
 }
 
 void servoDOWN(){
@@ -214,6 +246,7 @@ void servoDOWN(){
 			saveAngle();
 		}
 		else {
+			saveAngle();
 			break;
 		}
 	}
@@ -222,7 +255,7 @@ void servoDOWN(){
 int distanceStop(){
 	distance = measureDistance();
 	for(int j = 0; j < INDEX_DISTANCE; j++) {
-		if(distVector[j] > 7) {
+		if(distVector[j] > 5) {
 			return 0;
 		}
 	}
@@ -252,4 +285,50 @@ void stir2(){
 		_delay_ms(10);
 	}
 	stage = 3;
+}
+
+void progressTime() {
+	progress++;
+	if (progress == PROGRESS_STEPS+1) {
+		progress = 0;
+	}
+	writeShiftRegister();
+}
+
+void writeShiftRegister(){
+	PORTD &= ~(1<<PD6);
+	if (progress){
+		PORTD &= ~(1<<PD7);
+		PORTD |= (1<<PD5);
+		PORTD |= (1<<PD7);
+	} else {
+		PORTD &= ~(1<<PD5);
+		for (int i = 0; i<8; i++){
+			PORTD &= ~(1<<PD7);
+			PORTD |= (1<<PD7);
+		}
+	}
+	PORTD |= (1<<PD6);
+}
+
+void finishCoffee(){
+	for (int j = 0; j < 10; j++){
+		for (int i = 0; i < PROGRESS_STEPS; i++){
+			PORTD &= ~(1<<PD6);
+			PORTD &= ~(1<<PD7);
+			PORTD |= (1<<PD5);
+			PORTD |= (1<<PD7);
+			PORTD |= (1<<PD6);
+			_delay_ms(35);
+		}
+		for (int i = 0; i < PROGRESS_STEPS; i++){
+			PORTD &= ~(1<<PD6);
+			PORTD &= ~(1<<PD7);
+			PORTD &= ~(1<<PD5);
+			PORTD |= (1<<PD7);
+			PORTD |= (1<<PD6);
+			_delay_ms(35);
+		}
+	}
+
 }
