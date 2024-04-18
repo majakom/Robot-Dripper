@@ -2,14 +2,14 @@
 #include <util/delay.h>
 #include <avr/eeprom.h>
 #include <stdio.h>
-# define INDEX_DISTANCE 5
+# define INDEX_DISTANCE 15
 # define PROGRESS_STEPS 6
 
-const int MIN_ANGLE = 3;
-const int MAX_ANGLE = 41;
+const int MIN_ANGLE = 41;
+const int MAX_ANGLE = 3;
 
-const int MAX_MOTOR = 255;
-const int MIN_MOTOR = 200;
+const int MAX_MOTOR = 100;
+const int MIN_MOTOR = 75;
 
 void init();
 void initLEDs();
@@ -56,9 +56,9 @@ int main(void) {
 		case 0:
 			if (bit_is_clear(PINC,PC3)){
 				startCoffee();
-				_delay_ms(5000);
+				_delay_ms(30000);
 				progressTime();
-				_delay_ms(5000);
+				_delay_ms(30000);
 				progressTime();
 			} else if (bit_is_clear(PINC,PC2)){
 				servoUP();
@@ -85,13 +85,13 @@ int main(void) {
 			break;
 		case 5:
 			PORTC |= (1<<PC4);
-			_delay_ms(1000);
+			_delay_ms(15000);
 			progressTime();
-			_delay_ms(5000);
+			_delay_ms(30000);
 			progressTime();
-			_delay_ms(5000);
+			_delay_ms(30000);
 			progressTime();
-			_delay_ms(5000);
+			_delay_ms(30000);
 			progressTime();
 			PORTC &= ~(1<<PC4);
 			stage = 6;
@@ -154,7 +154,7 @@ void initDistanceMeasurement(){
 }
 
 void initMotorCotntrol(){
-	TCCR2 |= (1 << WGM20) | (1 << WGM21) | (1 << COM21) | (1 << CS20); // Set Fast PWM mode with non-inverted output
+	TCCR2 |= (1 << WGM20) | (1 << WGM21) | (1 << COM21) | (1 << CS22); // Set Fast PWM mode with non-inverted output
 	DDRB |= (1 << PB3); // Set OC2 (PB3) as output
 	DDRD |= (1<<PD2); // Set Direction 1 Control Output
 	DDRD |= (1<<PD3); // Set Direction 2 Control Output
@@ -197,7 +197,7 @@ unsigned long measureDistance(){
 	sendPulse(); // Send pulse to trigger the sensor
 	unsigned long duration = measurePulse(); // Measure the pulse duration
 	// Calculate distance using duration and the speed of sound
-	unsigned long new_distance = (duration * 343) / (2 * 10000); // Convert to centimeters
+	unsigned long new_distance = (duration * 343) / (2*1000); // Convert to centimeters
 
 	if (indexVector == INDEX_DISTANCE){
 		indexVector = 0;
@@ -230,7 +230,7 @@ void startCoffee(){
 }
 
 void servoUP(){
-	for (int i = OCR1A; i <= MAX_ANGLE; i++){
+	for (int i = OCR1A; i >= MAX_ANGLE; i--){
 		OCR1A = i;
 		_delay_ms(100);
 		saveAngle();
@@ -239,10 +239,14 @@ void servoUP(){
 }
 
 void servoDOWN(){
-	for (int i = OCR1A; i >= MIN_ANGLE; i--){
+	for (int i = 0; i < INDEX_DISTANCE; i++){
+		distVector[i] = 1000;
+	}
+	_delay_ms(10);
+	for (int i = OCR1A; i <= MIN_ANGLE; i++){
 		if (!distanceStop()){
 			OCR1A = i;
-			_delay_ms(100);
+			_delay_ms(90);
 			saveAngle();
 		}
 		else {
@@ -254,12 +258,13 @@ void servoDOWN(){
 
 int distanceStop(){
 	distance = measureDistance();
+	int stop = 1;
 	for(int j = 0; j < INDEX_DISTANCE; j++) {
-		if(distVector[j] > 5) {
-			return 0;
+		if(distVector[j] > 6) {
+			stop = 0;
 		}
 	}
-	return 1;
+	return stop;
 }
 
 void stir1(){
