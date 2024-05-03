@@ -2,14 +2,14 @@
 #include <util/delay.h>
 #include <avr/eeprom.h>
 #include <stdio.h>
-# define INDEX_DISTANCE 15
+# define INDEX_DISTANCE 13
 # define PROGRESS_STEPS 6
 
 const int MIN_ANGLE = 41;
 const int MAX_ANGLE = 3;
 
-const int MAX_MOTOR = 100;
-const int MIN_MOTOR = 75;
+const int MAX_MOTOR = 130;
+const int MIN_MOTOR = 100;
 
 void init();
 void initLEDs();
@@ -77,7 +77,7 @@ int main(void) {
 		case 3:
 			motorStop();
 			stage = 4;
-			_delay_ms(4000);
+			_delay_ms(3000);
 			break;
 		case 4:
 			servoDOWN();
@@ -277,6 +277,8 @@ void stir1(){
 		motorForward(i);
 		_delay_ms(10);
 	}
+	motorStop();
+	_delay_ms(1000);
 	stage = 2;
 }
 
