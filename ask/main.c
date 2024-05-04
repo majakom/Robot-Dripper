@@ -8,8 +8,8 @@
 const int MIN_ANGLE = 41;
 const int MAX_ANGLE = 3;
 
-const int MAX_MOTOR = 130;
-const int MIN_MOTOR = 100;
+const int MAX_MOTOR = 140;
+const int MIN_MOTOR = 105;
 
 void init();
 void initLEDs();
@@ -77,7 +77,7 @@ int main(void) {
 		case 3:
 			motorStop();
 			stage = 4;
-			_delay_ms(3000);
+			_delay_ms(2000);
 			break;
 		case 4:
 			servoDOWN();
@@ -272,7 +272,7 @@ void stir1(){
 	motorStop();
 	_delay_ms(50);
 	motorForward(MAX_MOTOR);
-	_delay_ms(1000);
+	_delay_ms(2000);
 	for (int i = MAX_MOTOR; i >= MIN_MOTOR; i--){
 		motorForward(i);
 		_delay_ms(10);
