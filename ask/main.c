@@ -16,7 +16,7 @@ void initLEDs();
 void initButtons();
 void initServoControl();
 void initDistanceMeasurement();
-void initMotorCotntrol();
+void initMotorControl();
 void initShiftRegister();
 void blinkResetLed();
 void saveAngle();
@@ -29,7 +29,6 @@ void motorBackward(uint8_t dutyCycle);
 void progressTime();
 void writeShiftRegister();
 void finishCoffee();
-
 void startCoffee();
 void servoUP();
 void servoDOWN();
@@ -112,7 +111,7 @@ void init(void){
 	initButtons();
 	initServoControl();
 	initDistanceMeasurement();
-	initMotorCotntrol();
+	initMotorControl();
 	initShiftRegister();
 	blinkResetLed();
 }
@@ -138,7 +137,7 @@ void initServoControl(){
 	TCCR1B |= (1<<WGM13)|(1<<WGM12)|(1<<CS11)|(1<<CS10);
 	ICR1 = (F_CPU/64UL/60ul)-1;
 	uint8_t byteRead = eeprom_read_byte((uint8_t*)23); // read the byte in location 23
-	if (byteRead>=3 && byteRead <= 41){
+	if (byteRead>=MAX_ANGLE && byteRead <= MIN_ANGLE){
 		OCR1A = byteRead; // Set angle to last value (if in memory)
 	} else {
 		OCR1A = MAX_ANGLE; // Set default angle if nothing in memory
@@ -153,7 +152,7 @@ void initDistanceMeasurement(){
 	}
 }
 
-void initMotorCotntrol(){
+void initMotorControl(){
 	TCCR2 |= (1 << WGM20) | (1 << WGM21) | (1 << COM21) | (1 << CS22); // Set Fast PWM mode with non-inverted output
 	DDRB |= (1 << PB3); // Set OC2 (PB3) as output
 	DDRD |= (1<<PD2); // Set Direction 1 Control Output
