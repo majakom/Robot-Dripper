@@ -8,6 +8,7 @@ The goal of this project was to create a robot that is a coffee machine.
 Project was finally presented at Poznań Univeristy of Technology at the event RoboDay.
 
 This repository includes code for both [arduino UNO prototype](motor_control) and [atmega 8 final version](ask) of the robot.
+[This directory](motiondetector) leads to code used for testing the motion detector.
 
 ## Links to documentation
 
