@@ -18,5 +18,4 @@ https://docs.google.com/document/d/1cahnLlo-Lx6Y2TZ_qJPBwkHGlFsrj01b/edit?usp=sh
 Short film on YouTube which depicts the process of creating the coffee machine:
 https://www.youtube.com/watch?v=yFp_BpbxnpI
 
-Link to the site on Facebook of Computer Engineering Laboratory of the Poznań University of Technology:
-https://www.facebook.com/profile.php?id=100064815633820
+
