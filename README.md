@@ -15,7 +15,7 @@ This repository includes code for both [arduino UNO prototype](motor_control) an
 Entire documentation of the proccess available under the following link: 
 https://docs.google.com/document/d/1cahnLlo-Lx6Y2TZ_qJPBwkHGlFsrj01b/edit?usp=sharing&ouid=103557156073634909180&rtpof=true&sd=true
 
-Short film on YouTube which depicts the process of creating the coffee machine:\n
+Short film on YouTube which depicts the process of creating the coffee machine:
 https://www.youtube.com/watch?v=yFp_BpbxnpI
 
 
